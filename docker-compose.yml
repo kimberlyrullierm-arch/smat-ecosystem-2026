@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # --- SERVICIO 1: BACKEND (FASTAPI) ---
+  backend:
+    build:
+      context: ./backend
+    container_name: smat_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    # El reto del laboratorio: Validar el estado de salud mediante Swagger
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # --- SERVICIO 2: PUENTE MQTT (MQTT_BRIDGE) ---
+  mqtt_bridge:
+    build:
+      context: ./iot_device
+    container_name: smat_mqtt_bridge
+    restart: always
+    # Asegura que el bridge inicie ÚNICAMENTE cuando el backend esté saludable (HTTP 200)
+    depends_on:
+      backend:
+        condition: service_healthy
